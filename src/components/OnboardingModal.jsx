@@ -447,7 +447,7 @@ function ApiStep({ draft, set, modelList, modelLoading, onFetchModels }) {
 
       {mode === "online" && (
         <p className="onboarding-preview">
-          🌐 默认由春信后端 <code>api.xushuo.cc</code> 提供 AI 能力，每天每设备 500 次；部署了 Functions 并填了环境变量则会走同源代理
+          🌐 默认由春信后端 <code>cx.xushuo.cc</code> 提供 AI 能力，每天每设备 500 次；部署了 Functions 并填了环境变量则会走同源代理
         </p>
       )}
     </>

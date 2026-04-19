@@ -429,7 +429,7 @@ export default function SettingsPage({ onBack, onSaved, memories, onAddMemory, o
 
             {(form.apiMode || "online") === "online" && (
               <p className="field-hint">
-                🌐 默认由春信后端 <code>api.xushuo.cc</code> 直接提供 AI 能力，每个设备每天 500 次聊天额度；若部署了 Cloudflare Functions 并配置了密钥，会改走同源代理
+                🌐 默认由春信后端 <code>cx.xushuo.cc</code> 直接提供 AI 能力，每个设备每天 500 次聊天额度；若部署了 Cloudflare Functions 并配置了密钥，会改走同源代理
               </p>
             )}
           </>
