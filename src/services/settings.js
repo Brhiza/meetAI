@@ -36,12 +36,15 @@ export async function saveSettings(settings) {
   await saveSetting(SETTINGS_KEY, settings);
 }
 
+export const XUSHUO_BASE = "https://cx.xushuo.cc";
+export const XUSHUO_MODEL = "free/cc";
+
 export function resolveApiConfig(settings) {
   if (settings?.apiMode === "online") {
     return {
-      apiUrl: "/api",
-      apiKey: "cf-proxy",
-      model: "",
+      apiUrl: XUSHUO_BASE,
+      apiKey: "",
+      model: XUSHUO_MODEL,
     };
   }
   return {

@@ -1,5 +1,6 @@
 // Cloudflare Pages Functions 同源代理
-// 前端 "在线 AI" 模式调用 /api/chat/completions 等路径，由此代理转发到真实上游
+// 前端 "在线 AI" 模式可选走同源代理：若配置了 API_URL / API_KEY，前端会探测到并走 /api/chat/completions
+// 否则前端默认直连春信后端（cx.xushuo.cc）
 // 环境变量（在 Cloudflare Pages 项目 Settings → Environment variables 里配置，不要带 VITE_ 前缀）：
 //   API_URL   例如 https://api.openai.com/v1
 //   API_KEY   真实密钥（仅服务端可见，前端 bundle 里不会出现）
@@ -19,11 +20,17 @@ const STRIPPED_HEADERS = new Set([
   "upgrade",
 ]);
 
-// 首字节超时：Cloudflare Pages Functions 单请求默认约 30 秒，留点余量
-const UPSTREAM_TIMEOUT_MS = 25000;
-
 export async function onRequest(ctx) {
   const { request, env } = ctx;
+  const url = new URL(request.url);
+
+  // 前端探测用：不转发上游，直接告诉前端是否已配置好可走 functions
+  if (url.pathname === "/api/__probe") {
+    return json({
+      configured: Boolean(env.API_URL && env.API_KEY),
+    });
+  }
+
   const apiUrl = (env.API_URL || "").replace(/\/+$/, "");
   const apiKey = env.API_KEY || "";
 
@@ -31,7 +38,6 @@ export async function onRequest(ctx) {
     return json({ error: "服务端未配置 API_URL / API_KEY 环境变量" }, 500);
   }
 
-  const url = new URL(request.url);
   const subpath = url.pathname.replace(/^\/api/, "") || "/";
   const upstreamUrl = apiUrl + subpath + (url.search || "");
 
@@ -63,21 +69,12 @@ export async function onRequest(ctx) {
     init.body = bodyText;
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-  init.signal = controller.signal;
-
   let upstream;
   try {
     upstream = await fetch(upstreamUrl, init);
   } catch (err) {
-    clearTimeout(timer);
-    if (err && err.name === "AbortError") {
-      return json({ error: `上游 API ${UPSTREAM_TIMEOUT_MS / 1000} 秒内未返回首字节，已终止` }, 504);
-    }
     return json({ error: `上游连接失败：${err && err.message ? err.message : "unknown"}` }, 502);
   }
-  clearTimeout(timer);
 
   const headers = new Headers();
   for (const [k, v] of upstream.headers.entries()) {

@@ -447,7 +447,7 @@ function ApiStep({ draft, set, modelList, modelLoading, onFetchModels }) {
 
       {mode === "online" && (
         <p className="onboarding-preview">
-          🌐 将通过同源接口 <code>/api/chat/completions</code> 访问后端代理，你不需要填写任何密钥
+          🌐 默认由春信后端 <code>cx.xushuo.cc</code> 提供 AI 能力，每天每设备 500 次；部署了 Functions 并填了环境变量则会走同源代理
         </p>
       )}
     </>

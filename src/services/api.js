@@ -2,6 +2,45 @@ import { INNER_VOICE_OPEN_TAG, INNER_VOICE_CLOSE_TAG } from "./tags";
 import { buildContextMessages, extractMemories, stripMemoryTags, estimateTokens } from "./skins";
 import { resolveApiConfig } from "./settings";
 
+const CLIENT_ID_KEY = "deep_client_id";
+const CLIENT_ID_PREFIX = "deep";
+
+function getClientId() {
+  try {
+    let id = localStorage.getItem(CLIENT_ID_KEY);
+    if (!id) {
+      const uuid =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      id = `${CLIENT_ID_PREFIX}-anon-${uuid}`;
+      localStorage.setItem(CLIENT_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return `${CLIENT_ID_PREFIX}-anon-${Date.now().toString(36)}`;
+  }
+}
+
+// 懒探测同源 Cloudflare Functions 是否已配置 API_URL/API_KEY
+// 有则 online 模式优先走同源代理；否则直连春信后端
+let functionsProbe = null;
+function probeFunctions() {
+  if (!functionsProbe) {
+    functionsProbe = (async () => {
+      try {
+        const res = await fetch("/api/__probe", { method: "GET", cache: "no-store" });
+        if (!res.ok) return false;
+        const data = await res.json().catch(() => null);
+        return Boolean(data && data.configured);
+      } catch {
+        return false;
+      }
+    })();
+  }
+  return functionsProbe;
+}
+
 export { INNER_VOICE_OPEN_TAG, INNER_VOICE_CLOSE_TAG };
 export { extractMemories, stripMemoryTags, estimateTokens };
 
@@ -63,6 +102,8 @@ export function friendlyErrorMessage(err) {
   const msg = (err && err.message) || "";
   if (err && err.name === "AbortError") return "我刚才被你打断了。";
   if (/Failed to fetch|NetworkError|net::|ERR_/i.test(msg)) return "我这边信号不太好，连不上。稍后再试一次？";
+  if (/QUOTA_EXCEEDED|quota/i.test(msg)) return "今天的聊天额度用完啦，咱明天再接着唠。";
+  if (/CONTEXT_TOO_LARGE/i.test(msg)) return "咱聊得太长了，我脑子快装不下——开个新对话接着来？";
   if (/401|403|apikey|api key|Unauthorized/i.test(msg)) return "后台说我的身份证过期了（API Key 无效），麻烦你去设置里看看。";
   if (/429|rate.?limit/i.test(msg)) return "我说太快被限速了，喘口气再继续。";
   if (/5\d\d/.test(msg)) return "服务器那边出了点问题，不是你的错，待会儿再来。";
@@ -70,22 +111,44 @@ export function friendlyErrorMessage(err) {
 }
 
 async function callChatCompletion(settings, messages, { signal, stream } = {}) {
-  const { apiUrl, apiKey, model } = resolveApiConfig(settings);
+  const isOnline = settings?.apiMode === "online";
+  const useFunctions = isOnline ? await probeFunctions() : false;
+
   const headers = { "Content-Type": "application/json" };
-  if (settings?.apiMode !== "online") {
-    headers.Authorization = `Bearer ${apiKey}`;
+  let endpoint;
+  let body;
+
+  if (useFunctions) {
+    // Cloudflare Functions 同源代理（上游 OpenAI 兼容）
+    // model 传空，由 functions 用 env.API_MODEL 注入
+    endpoint = "/api/chat/completions";
+    body = { model: "", messages, stream: !!stream };
+  } else if (isOnline) {
+    // 直连春信后端
+    const { apiUrl, model } = resolveApiConfig(settings);
+    headers["X-Client-ID"] = getClientId();
+    endpoint = `${apiUrl}/api/proxy`;
+    body = { model, messages, stream: !!stream };
+  } else {
+    // 用户自定义 OpenAI 兼容 API
+    const { apiUrl, apiKey, model } = resolveApiConfig(settings);
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+    endpoint = `${apiUrl}/chat/completions`;
+    body = { model, messages, stream: !!stream };
   }
-  const res = await fetch(`${apiUrl}/chat/completions`, {
+
+  const res = await fetch(endpoint, {
     method: "POST",
     headers,
-    body: JSON.stringify({ model, messages, stream: !!stream }),
+    body: JSON.stringify(body),
     signal,
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
     throw new Error(`API请求失败 (${res.status}): ${errText || res.statusText}`);
   }
-  return res;
+  // useSimpleSSE：春信简化 SSE（{content}/{done}/{error}），仅在直连春信时为 true
+  return { res, useSimpleSSE: isOnline && !useFunctions };
 }
 
 export async function generateSummary(settings, messages, signal) {
@@ -97,7 +160,7 @@ export async function generateSummary(settings, messages, signal) {
       { role: "system", content: "你是一个忠实的对话摘要助手。" },
       { role: "user", content: `以下是一段聊天记录：\n\n${contextText}\n\n${SUMMARIZE_DIRECTIVE}` },
     ];
-    const res = await callChatCompletion(settings, req, { signal, stream: false });
+    const { res } = await callChatCompletion(settings, req, { signal, stream: false });
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content;
     return (content || "").trim();
@@ -119,7 +182,7 @@ export async function streamChatCompletion(settings, messages, onChunk, onDone, 
   let hasStreamed = false;
 
   const runOnce = async () => {
-    const res = await callChatCompletion(settings, messages, { signal, stream: true });
+    const { res, useSimpleSSE } = await callChatCompletion(settings, messages, { signal, stream: true });
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -135,19 +198,41 @@ export async function streamChatCompletion(settings, messages, onChunk, onDone, 
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed || !trimmed.startsWith("data: ")) continue;
-        const data = trimmed.slice(6);
-        if (data === "[DONE]") {
-          onDone({ aborted: false });
-          return;
-        }
-        try {
-          const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta?.content;
-          if (delta) {
-            hasStreamed = true;
-            onChunk(delta);
+        const data = trimmed.slice(6).trim();
+        if (!data) continue;
+
+        if (useSimpleSSE) {
+          let parsed;
+          try {
+            parsed = JSON.parse(data);
+          } catch {
+            continue;
           }
-        } catch {}
+          if (parsed.error) {
+            throw new Error(parsed.error);
+          }
+          if (parsed.done) {
+            onDone({ aborted: false });
+            return;
+          }
+          if (parsed.content) {
+            hasStreamed = true;
+            onChunk(parsed.content);
+          }
+        } else {
+          if (data === "[DONE]") {
+            onDone({ aborted: false });
+            return;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              hasStreamed = true;
+              onChunk(delta);
+            }
+          } catch {}
+        }
       }
     }
 
