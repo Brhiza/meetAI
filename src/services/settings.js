@@ -41,7 +41,7 @@ export function resolveApiConfig(settings) {
     return {
       apiUrl: "/api",
       apiKey: "cf-proxy",
-      model: settings.model || "",
+      model: "",
     };
   }
   return {

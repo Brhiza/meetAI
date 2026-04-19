@@ -3,7 +3,7 @@
 // 环境变量（在 Cloudflare Pages 项目 Settings → Environment variables 里配置，不要带 VITE_ 前缀）：
 //   API_URL   例如 https://api.openai.com/v1
 //   API_KEY   真实密钥（仅服务端可见，前端 bundle 里不会出现）
-//   API_MODEL 可选，仅作参考
+//   API_MODEL 在线 AI 模式下使用的模型名（前端不传 model 时由此填充；前端显式传了就尊重前端）
 
 export async function onRequest(ctx) {
   const { request, env } = ctx;
@@ -25,8 +25,24 @@ export async function onRequest(ctx) {
       "Authorization": `Bearer ${apiKey}`,
     },
   };
+
   if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = await request.text();
+    let bodyText = await request.text();
+    if (bodyText) {
+      try {
+        const parsed = JSON.parse(bodyText);
+        if (parsed && typeof parsed === "object" && "model" in parsed && !parsed.model) {
+          if (!env.API_MODEL) {
+            return json({ error: "服务端未配置 API_MODEL 环境变量（在线 AI 模式下必填）" }, 500);
+          }
+          parsed.model = env.API_MODEL;
+          bodyText = JSON.stringify(parsed);
+        }
+      } catch {
+        // body 不是合法 JSON，保持原样转发
+      }
+    }
+    init.body = bodyText;
   }
 
   try {

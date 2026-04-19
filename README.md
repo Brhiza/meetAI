@@ -56,6 +56,7 @@ npm run preview  # 预览构建产物
 4. Environment variables（**重要，见下方安全说明**）：
    - `API_URL` = `https://api.openai.com/v1`（或任意 OpenAI 兼容中转）
    - `API_KEY` = 你的真实密钥
+   - `API_MODEL` = `gpt-3.5-turbo`（在线 AI 模式下使用的模型名，必填）
 
 项目里的 `functions/api/[[path]].js` 会被 Cloudflare 自动识别为 Pages Functions，部署后所有 `/api/*` 请求都会走这个代理。
 
