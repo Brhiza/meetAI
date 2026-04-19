@@ -6021,6 +6021,16 @@ h2 {
   margin: 0 auto;
   width: 100%;
 }
+/* 移动端 composer 安全区 + 左右留白（统一覆盖所有皮肤） */
+@media (max-width: 768px) {
+  .composer-root {
+    box-sizing: border-box;
+    padding-top: 6px !important;
+    padding-right: calc(10px + env(safe-area-inset-right)) !important;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom)) !important;
+    padding-left: calc(10px + env(safe-area-inset-left)) !important;
+  }
+}
 /* 每个滚动容器：弹性占剩余高度、内部滚动 */
 .conversation-stage,
 .app-shell.skin-gemini .conversation-stage,
