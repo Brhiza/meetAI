@@ -5,6 +5,23 @@
 //   API_KEY   真实密钥（仅服务端可见，前端 bundle 里不会出现）
 //   API_MODEL 在线 AI 模式下使用的模型名（前端不传 model 时由此填充；前端显式传了就尊重前端）
 
+// 过滤掉这些响应头（hop-by-hop 或会干扰流式传输）
+const STRIPPED_HEADERS = new Set([
+  "content-encoding",
+  "content-length",
+  "transfer-encoding",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "upgrade",
+]);
+
+// 首字节超时：Cloudflare Pages Functions 单请求默认约 30 秒，留点余量
+const UPSTREAM_TIMEOUT_MS = 25000;
+
 export async function onRequest(ctx) {
   const { request, env } = ctx;
   const apiUrl = (env.API_URL || "").replace(/\/+$/, "");
@@ -23,6 +40,7 @@ export async function onRequest(ctx) {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
+      "Accept": "text/event-stream, application/json",
     },
   };
 
@@ -45,19 +63,36 @@ export async function onRequest(ctx) {
     init.body = bodyText;
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  init.signal = controller.signal;
+
+  let upstream;
   try {
-    const upstream = await fetch(upstreamUrl, init);
-    const headers = new Headers();
-    const ct = upstream.headers.get("content-type");
-    if (ct) headers.set("content-type", ct);
-    return new Response(upstream.body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers,
-    });
+    upstream = await fetch(upstreamUrl, init);
   } catch (err) {
-    return json({ error: `上游请求失败：${err && err.message ? err.message : "unknown"}` }, 502);
+    clearTimeout(timer);
+    if (err && err.name === "AbortError") {
+      return json({ error: `上游 API ${UPSTREAM_TIMEOUT_MS / 1000} 秒内未返回首字节，已终止` }, 504);
+    }
+    return json({ error: `上游连接失败：${err && err.message ? err.message : "unknown"}` }, 502);
   }
+  clearTimeout(timer);
+
+  const headers = new Headers();
+  for (const [k, v] of upstream.headers.entries()) {
+    if (STRIPPED_HEADERS.has(k.toLowerCase())) continue;
+    headers.set(k, v);
+  }
+  if (!headers.has("cache-control")) {
+    headers.set("cache-control", "no-cache, no-transform");
+  }
+
+  return new Response(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers,
+  });
 }
 
 function json(obj, status = 200) {
