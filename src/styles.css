@@ -46,7 +46,9 @@ body,
 
 body {
   height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
 }
 
@@ -72,7 +74,9 @@ h2 {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
 }
 
@@ -641,6 +645,7 @@ h2 {
   position: relative;
   min-width: 0;
   height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   background: var(--bg);
   overflow: hidden;
@@ -6026,7 +6031,6 @@ h2 {
   flex: 1 1 0 !important;
   min-height: 0 !important;
   overflow-y: auto !important;
-  padding-bottom: 20px !important;
 }
 .desktop-chat,
 .mobile-preview,
