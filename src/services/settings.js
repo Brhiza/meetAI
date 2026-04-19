@@ -36,7 +36,7 @@ export async function saveSettings(settings) {
   await saveSetting(SETTINGS_KEY, settings);
 }
 
-export const XUSHUO_BASE = "https://cx.xushuo.cc";
+export const XUSHUO_BASE = "https://api.xushuo.cc";
 export const XUSHUO_MODEL = "free/cc";
 
 export function resolveApiConfig(settings) {
