@@ -106,10 +106,20 @@ export async function generateSummary(settings, messages, signal) {
   }
 }
 
-export async function streamChatCompletion(settings, messages, onChunk, onDone, onError, signal) {
-  try {
-    const res = await callChatCompletion(settings, messages, { signal, stream: true });
+function shouldRetryError(err) {
+  if (!err) return false;
+  if (err.name === "AbortError") return false;
+  const msg = (err.message || "").toLowerCase();
+  return /\b5\d\d\b|failed to fetch|networkerror|net::|err_/i.test(msg);
+}
 
+export async function streamChatCompletion(settings, messages, onChunk, onDone, onError, signal) {
+  const MAX_ATTEMPTS = 2;
+  const RETRY_DELAY_MS = 500;
+  let hasStreamed = false;
+
+  const runOnce = async () => {
+    const res = await callChatCompletion(settings, messages, { signal, stream: true });
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -134,6 +144,7 @@ export async function streamChatCompletion(settings, messages, onChunk, onDone, 
           const parsed = JSON.parse(data);
           const delta = parsed.choices?.[0]?.delta?.content;
           if (delta) {
+            hasStreamed = true;
             onChunk(delta);
           }
         } catch {}
@@ -141,12 +152,25 @@ export async function streamChatCompletion(settings, messages, onChunk, onDone, 
     }
 
     onDone({ aborted: false });
-  } catch (err) {
-    if (err.name === "AbortError") {
-      onDone({ aborted: true });
+  };
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      await runOnce();
       return;
+    } catch (err) {
+      if (err && err.name === "AbortError") {
+        onDone({ aborted: true });
+        return;
+      }
+      const isLast = attempt === MAX_ATTEMPTS - 1;
+      const retryable = !hasStreamed && shouldRetryError(err);
+      if (!retryable || isLast) {
+        onError(err);
+        return;
+      }
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
     }
-    onError(err);
   }
 }
 
