@@ -208,6 +208,16 @@ export function estimateTokens(text) {
 
 const MAX_CONTEXT_TOKENS = 8000;
 
+function buildAssistantFeedbackDirective(feedback) {
+  if (feedback === "liked") {
+    return "[系统指令]用户对你上一条回复点了赞，说明 ta 对这次回答是满意的。你需要知道这份正向反馈，但不要生硬地专门感谢点赞，也不要反复提起这件事。";
+  }
+  if (feedback === "disliked") {
+    return "[系统指令]用户对你上一条回复点了踩，说明 ta 对这次回答不满意。你需要把这当成真实反馈，理解用户可能觉得你刚才没答到点上、说得不够好，后续请自然调整，但不要反复念叨用户点踩了你。";
+  }
+  return "";
+}
+
 export function buildContextMessages(chatMessages, settings, memosText, opts = {}) {
   const { summary, extraSystem } = opts;
   let systemPrompt = buildSystemPrompt(settings, memosText);
@@ -220,10 +230,15 @@ export function buildContextMessages(chatMessages, settings, memosText, opts = {
     ? chatMessages.slice(summary.coveredCount)
     : chatMessages;
 
-  const messagesWithTokens = effective.map((msg) => ({
-    ...msg,
-    tokens: estimateTokens(msg.content),
-  }));
+  const messagesWithTokens = effective.map((msg) => {
+    const feedbackDirective =
+      msg.role === "assistant" ? buildAssistantFeedbackDirective(msg.feedback) : "";
+    return {
+      ...msg,
+      feedbackDirective,
+      tokens: estimateTokens(msg.content) + estimateTokens(feedbackDirective),
+    };
+  });
 
   let remaining = MAX_CONTEXT_TOKENS - systemTokens;
   if (remaining < 500) remaining = 500;
@@ -239,6 +254,9 @@ export function buildContextMessages(chatMessages, settings, memosText, opts = {
   const result = [{ role: "system", content: systemPrompt }];
   for (const msg of kept) {
     result.push({ role: msg.role, content: msg.content });
+    if (msg.feedbackDirective) {
+      result.push({ role: "system", content: msg.feedbackDirective });
+    }
   }
   if (extraSystem) {
     result.push({ role: "system", content: extraSystem });

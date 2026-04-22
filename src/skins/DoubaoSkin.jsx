@@ -173,7 +173,7 @@ export function DoubaoSidebar(props) {
   );
 }
 
-export function DoubaoDesktopView({ chat, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, userName, thinkingExpanded }) {
+export function DoubaoDesktopView({ chat, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, onAssistantFeedback, userName, thinkingExpanded }) {
   if (!chat) {
     return (
       <section className="empty-state doubao">
@@ -205,6 +205,7 @@ export function DoubaoDesktopView({ chat, thinkingTimes, streaming, onDeleteMess
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />
@@ -214,7 +215,7 @@ export function DoubaoDesktopView({ chat, thinkingTimes, streaming, onDeleteMess
   );
 }
 
-export function DoubaoMobileView({ chat, setDrawerOpen, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, userName, thinkingExpanded }) {
+export function DoubaoMobileView({ chat, setDrawerOpen, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, onAssistantFeedback, userName, thinkingExpanded }) {
   const lastIdx = chat ? chat.messages.length - 1 : -1;
   return (
     <section className="mobile-preview doubao">
@@ -249,6 +250,7 @@ export function DoubaoMobileView({ chat, setDrawerOpen, thinkingTimes, streaming
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />

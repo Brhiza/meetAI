@@ -173,6 +173,7 @@ export function GrokDesktopView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -226,6 +227,7 @@ export function GrokDesktopView({
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />
@@ -246,6 +248,7 @@ export function GrokMobileView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -300,6 +303,7 @@ export function GrokMobileView({
                 onRegenerate={onRegenerate}
                 onEdit={onEditUserMessage}
                 onRetry={onRetryFailed}
+                onFeedback={onAssistantFeedback}
                 userName={userName}
                 thinkingExpanded={thinkingExpanded}
               />

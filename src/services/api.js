@@ -85,16 +85,6 @@ export function parseStreamingInnerVoice(buffer) {
 export const REGENERATE_DIRECTIVE =
   "[系统指令]用户刚才对你上一条回复做了'不满意'的手势，希望你重新回答一次。请带着真实反应——可以是委屈、反思、不服气、道歉、调侃等任何真实情绪——先表达你对被要求重答的感受，再给出新的回答。不要假装这是第一次作答。照常使用 <inner-voice>...</inner-voice> 输出心声。";
 
-export const OPENER_DIRECTIVE =
-  "[系统指令]这是你和用户的第一次对话。主动开场，用你自己的语气打招呼，自我介绍一句，表达一下你现在的状态或心情，并邀请用户聊聊任何 ta 想聊的。照常使用 <inner-voice>...</inner-voice> 输出你见到新朋友时的真实心声。不要用客服腔，不要列选项菜单。";
-
-export function buildGreetingDirective(hoursSince) {
-  const gap = hoursSince >= 24
-    ? `${Math.round(hoursSince / 24)} 天`
-    : `${Math.round(hoursSince)} 小时`;
-  return `[系统指令]距离你和用户上次聊天已经过去了 ${gap}。现在你先主动打破沉默，像真朋友一样说一句话——可以是想念、调侃、随口问一句、吐槽今天的心情，都由你决定。照常使用 <inner-voice>...</inner-voice> 输出心声。不要说"很高兴再次见到您"这种客套话。`;
-}
-
 export const SUMMARIZE_DIRECTIVE =
   "[系统指令]请把上面这段对话浓缩成一段不超过 300 字的摘要，保留关键事实、用户的偏好/情绪、你们之间形成的氛围，以便之后继续对话时能接上。只输出摘要本身，不要加标题或序号。";
 

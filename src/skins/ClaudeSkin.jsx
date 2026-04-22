@@ -190,6 +190,7 @@ export function ClaudeDesktopView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -234,6 +235,7 @@ export function ClaudeDesktopView({
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />
@@ -254,6 +256,7 @@ export function ClaudeMobileView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -313,6 +316,7 @@ export function ClaudeMobileView({
                 onRegenerate={onRegenerate}
                 onEdit={onEditUserMessage}
                 onRetry={onRetryFailed}
+                onFeedback={onAssistantFeedback}
                 userName={userName}
                 thinkingExpanded={thinkingExpanded}
               />

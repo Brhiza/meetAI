@@ -22,6 +22,7 @@ export function DefaultDesktopView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -72,6 +73,7 @@ export function DefaultDesktopView({
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage ? (mid, text) => onEditUserMessage(mid, text) : undefined}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />
@@ -91,6 +93,7 @@ export function DefaultMobileView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -133,6 +136,7 @@ export function DefaultMobileView({
                 onRegenerate={onRegenerate}
                 onEdit={onEditUserMessage ? (mid, text) => onEditUserMessage(mid, text) : undefined}
                 onRetry={onRetryFailed}
+                onFeedback={onAssistantFeedback}
                 userName={userName}
                 thinkingExpanded={thinkingExpanded}
               />

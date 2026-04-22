@@ -21,6 +21,7 @@ export function GenericDesktopView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   logoText,
   thinkingExpanded,
@@ -72,6 +73,7 @@ export function GenericDesktopView({
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />
@@ -91,6 +93,7 @@ export function GenericMobileView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -133,6 +136,7 @@ export function GenericMobileView({
                 onRegenerate={onRegenerate}
                 onEdit={onEditUserMessage}
                 onRetry={onRetryFailed}
+                onFeedback={onAssistantFeedback}
                 userName={userName}
                 thinkingExpanded={thinkingExpanded}
               />

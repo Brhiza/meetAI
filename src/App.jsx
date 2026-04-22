@@ -9,8 +9,6 @@ import {
   extractMemories,
   stripMemoryTags,
   REGENERATE_DIRECTIVE,
-  OPENER_DIRECTIVE,
-  buildGreetingDirective,
   generateSummary,
   friendlyErrorMessage,
 } from "./services/api";
@@ -103,7 +101,6 @@ function App() {
   const lastAssistantIdRef = useRef(null);
   const chatsRef = useRef(chats);
   const abortRef = useRef(null);
-  const autoTriggeredRef = useRef(new Set());
   const summarizingRef = useRef(new Set());
 
   useEffect(() => {
@@ -351,34 +348,15 @@ function App() {
     await runStream(activeId, apiMessages);
   }, [streaming, activeId, settings, memosText, truncateAfter, runStream]);
 
-  const triggerAIOpener = useCallback(async (chat, kind) => {
-    if (!hasUsableApi(settings)) return;
-    const directive = kind === "greeting"
-      ? buildGreetingDirective((Date.now() - (chat.updatedAt || chat.createdAt)) / 3600000)
-      : OPENER_DIRECTIVE;
-    const apiMessages = buildContextMessages(chat.messages, settings, memosText, {
-      summary: chat.summary,
-      extraSystem: directive,
-    });
-    await runStream(chat.id, apiMessages);
-  }, [settings, memosText, runStream]);
-
-  useEffect(() => {
-    if (!chatsLoaded || !settings || !activeChat || streaming) return;
-    if (!hasUsableApi(settings)) return;
-    if (autoTriggeredRef.current.has(activeChat.id)) return;
-
-    const hoursSince = (Date.now() - (activeChat.updatedAt || activeChat.createdAt || 0)) / 3600000;
-    if (activeChat.messages.length === 0) {
-      autoTriggeredRef.current.add(activeChat.id);
-      triggerAIOpener(activeChat, "opener");
-    } else if (hoursSince >= 6) {
-      autoTriggeredRef.current.add(activeChat.id);
-      triggerAIOpener(activeChat, "greeting");
-    } else {
-      autoTriggeredRef.current.add(activeChat.id);
-    }
-  }, [chatsLoaded, settings, activeChat, streaming, triggerAIOpener]);
+  const handleAssistantFeedback = useCallback((msgId, feedback) => {
+    if (!activeId) return;
+    const chat = chatsRef.current.find((c) => c.id === activeId);
+    if (!chat) return;
+    const msg = chat.messages.find((item) => item.id === msgId);
+    if (!msg || msg.role !== "assistant") return;
+    const nextFeedback = msg.feedback === feedback ? null : feedback;
+    markMessage(activeId, msgId, { feedback: nextFeedback });
+  }, [activeId, markMessage]);
 
   if (!chatsLoaded || !memLoaded || !settings) {
     return <div className="loading-screen">加载中...</div>;
@@ -465,6 +443,7 @@ function App() {
     onRegenerate: handleRegenerate,
     onEditUserMessage: handleEditAndResend,
     onRetryFailed: handleRetryFailed,
+    onAssistantFeedback: handleAssistantFeedback,
     userName: settings.userName,
     thinkingExpanded: settings.thinkingExpanded,
   };
@@ -479,6 +458,7 @@ function App() {
     onRegenerate: handleRegenerate,
     onEditUserMessage: handleEditAndResend,
     onRetryFailed: handleRetryFailed,
+    onAssistantFeedback: handleAssistantFeedback,
     userName: settings.userName,
     thinkingExpanded: settings.thinkingExpanded,
   };

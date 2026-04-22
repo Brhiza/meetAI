@@ -207,7 +207,7 @@ export function GeminiMobileSidebar({
   );
 }
 
-export function GeminiDesktopView({ chat, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, userName, thinkingExpanded }) {
+export function GeminiDesktopView({ chat, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, onAssistantFeedback, userName, thinkingExpanded }) {
   if (!chat) {
     return (
       <section className="gemini-ui-desktop-view empty">
@@ -240,6 +240,7 @@ export function GeminiDesktopView({ chat, thinkingTimes, streaming, onDeleteMess
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />
@@ -249,7 +250,7 @@ export function GeminiDesktopView({ chat, thinkingTimes, streaming, onDeleteMess
   );
 }
 
-export function GeminiMobileView({ chat, setDrawerOpen, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, userName, thinkingExpanded }) {
+export function GeminiMobileView({ chat, setDrawerOpen, thinkingTimes, streaming, onDeleteMessage, onRegenerate, onEditUserMessage, onRetryFailed, onAssistantFeedback, userName, thinkingExpanded }) {
   const lastIdx = chat ? chat.messages.length - 1 : -1;
   const greeting = userName ? `${userName}，你好` : "你好";
 
@@ -304,6 +305,7 @@ export function GeminiMobileView({ chat, setDrawerOpen, thinkingTimes, streaming
               onRegenerate={onRegenerate}
               onEdit={onEditUserMessage}
               onRetry={onRetryFailed}
+              onFeedback={onAssistantFeedback}
               userName={userName}
               thinkingExpanded={thinkingExpanded}
             />

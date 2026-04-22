@@ -970,6 +970,23 @@ h2 {
   color: inherit;
 }
 
+.answer-actions button.active,
+.mobile-answer-actions button.active {
+  border-radius: 999px;
+}
+
+.answer-actions button.active.positive,
+.mobile-answer-actions button.active.positive {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.answer-actions button.active.negative,
+.mobile-answer-actions button.active.negative {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
 .assistant-block {
   margin-bottom: 28px;
 }

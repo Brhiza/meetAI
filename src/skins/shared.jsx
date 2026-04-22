@@ -275,6 +275,7 @@ export function MessageBubble({
   onRegenerate,
   onEdit,
   onRetry,
+  onFeedback,
   streaming,
   thinkingExpanded,
   userName,
@@ -464,13 +465,55 @@ export function MessageBubble({
                 <button aria-label="朗读"><Volume2 className="action-icon" strokeWidth={1.8} /></button>
                 <button aria-label="收藏"><Bookmark className="action-icon" strokeWidth={1.8} /></button>
                 <button aria-label="分享"><Share2 className="action-icon" strokeWidth={1.8} /></button>
-                <button aria-label="重试"><RotateCcw className="action-icon" strokeWidth={1.8} /></button>
+                <button
+                  aria-label="点赞"
+                  aria-pressed={msg.feedback === "liked"}
+                  className={msg.feedback === "liked" ? "active positive" : ""}
+                  onClick={() => onFeedback?.(msg.id, "liked")}
+                >
+                  <ThumbsUp className="action-icon" strokeWidth={1.8} />
+                </button>
+                <button
+                  aria-label="点踩"
+                  aria-pressed={msg.feedback === "disliked"}
+                  className={msg.feedback === "disliked" ? "active negative" : ""}
+                  onClick={() => onFeedback?.(msg.id, "disliked")}
+                >
+                  <ThumbsDown className="action-icon" strokeWidth={1.8} />
+                </button>
+                <button
+                  aria-label="重试"
+                  onClick={() => isLastAssistant && onRegenerate?.()}
+                  disabled={!isLastAssistant || !onRegenerate}
+                >
+                  <RotateCcw className="action-icon" strokeWidth={1.8} />
+                </button>
               </>
             ) : isGemini ? (
               <>
-                <button aria-label="点赞"><ThumbsUp className="action-icon" strokeWidth={1.8} /></button>
-                <button aria-label="点踩"><ThumbsDown className="action-icon" strokeWidth={1.8} /></button>
-                <button aria-label="重试"><RotateCcw className="action-icon" strokeWidth={1.8} /></button>
+                <button
+                  aria-label="点赞"
+                  aria-pressed={msg.feedback === "liked"}
+                  className={msg.feedback === "liked" ? "active positive" : ""}
+                  onClick={() => onFeedback?.(msg.id, "liked")}
+                >
+                  <ThumbsUp className="action-icon" strokeWidth={1.8} />
+                </button>
+                <button
+                  aria-label="点踩"
+                  aria-pressed={msg.feedback === "disliked"}
+                  className={msg.feedback === "disliked" ? "active negative" : ""}
+                  onClick={() => onFeedback?.(msg.id, "disliked")}
+                >
+                  <ThumbsDown className="action-icon" strokeWidth={1.8} />
+                </button>
+                <button
+                  aria-label="重试"
+                  onClick={() => isLastAssistant && onRegenerate?.()}
+                  disabled={!isLastAssistant || !onRegenerate}
+                >
+                  <RotateCcw className="action-icon" strokeWidth={1.8} />
+                </button>
                 <button aria-label="复制" onClick={() => navigator.clipboard.writeText(reply)}>
                   <Copy className="action-icon" strokeWidth={1.8} />
                 </button>
@@ -488,8 +531,22 @@ export function MessageBubble({
                 >
                   <RotateCcw className="action-icon" strokeWidth={1.8} />
                 </button>
-                <button aria-label="点赞"><ThumbsUp className="action-icon" strokeWidth={1.8} /></button>
-                <button aria-label="点踩"><ThumbsDown className="action-icon" strokeWidth={1.8} /></button>
+                <button
+                  aria-label="点赞"
+                  aria-pressed={msg.feedback === "liked"}
+                  className={msg.feedback === "liked" ? "active positive" : ""}
+                  onClick={() => onFeedback?.(msg.id, "liked")}
+                >
+                  <ThumbsUp className="action-icon" strokeWidth={1.8} />
+                </button>
+                <button
+                  aria-label="点踩"
+                  aria-pressed={msg.feedback === "disliked"}
+                  className={msg.feedback === "disliked" ? "active negative" : ""}
+                  onClick={() => onFeedback?.(msg.id, "disliked")}
+                >
+                  <ThumbsDown className="action-icon" strokeWidth={1.8} />
+                </button>
               </>
             )}
           </div>

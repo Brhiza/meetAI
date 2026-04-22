@@ -184,6 +184,7 @@ export function ChatGPTDesktopView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -240,6 +241,7 @@ export function ChatGPTDesktopView({
             onRegenerate={onRegenerate}
             onEdit={onEditUserMessage}
             onRetry={onRetryFailed}
+            onFeedback={onAssistantFeedback}
             userName={userName}
             thinkingExpanded={thinkingExpanded}
           />
@@ -260,6 +262,7 @@ export function ChatGPTMobileView({
   onRegenerate,
   onEditUserMessage,
   onRetryFailed,
+  onAssistantFeedback,
   userName,
   thinkingExpanded,
 }) {
@@ -314,6 +317,7 @@ export function ChatGPTMobileView({
                 onRegenerate={onRegenerate}
                 onEdit={onEditUserMessage}
                 onRetry={onRetryFailed}
+                onFeedback={onAssistantFeedback}
                 userName={userName}
                 thinkingExpanded={thinkingExpanded}
               />
